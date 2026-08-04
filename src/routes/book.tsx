@@ -43,10 +43,54 @@ const trips = [
 const fieldClass =
   "mt-1.5 w-full rounded-2xl border border-input bg-card px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/25";
 
+const bookingSchema = z.object({
+  full_name: z.string().trim().min(2, { message: "Please enter your full name" }).max(100),
+  email: z.string().trim().email({ message: "Please enter a valid email" }).max(255),
+  preferred_date: z.string().min(1, { message: "Please choose a preferred date" }),
+  divers: z.coerce.number().int().min(1).max(12),
+  trip: z.string().trim().min(1).max(120),
+  certification_level: z.string().trim().min(1).max(60),
+  notes: z.string().trim().max(1000).optional(),
+});
+
 function BookPage() {
   const { course } = Route.useSearch();
   const preselected = courses.find((c) => c.slug === course)?.name ?? trips[0];
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const parsed = bookingSchema.safeParse({
+      full_name: form.get("name"),
+      email: form.get("email"),
+      preferred_date: form.get("date"),
+      divers: form.get("divers"),
+      trip: form.get("trip"),
+      certification_level: form.get("level"),
+      notes: form.get("notes") || undefined,
+    });
+
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check the form");
+      return;
+    }
+
+    setSubmitting(true);
+    const { notes, ...rest } = parsed.data;
+    const { error } = await supabase
+      .from("booking_requests")
+      .insert({ ...rest, notes: notes ?? null });
+    setSubmitting(false);
+
+    if (error) {
+      toast.error("We couldn't send your request. Please try again or email us directly.");
+      return;
+    }
+    setSent(true);
+  }
+
 
   return (
     <>
