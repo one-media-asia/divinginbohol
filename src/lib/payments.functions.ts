@@ -104,3 +104,76 @@ export const handlePaypalWebhook = createServerFn({ method: "POST" })
   });
 
 export default handlePaypalWebhook;
+
+import { z } from "zod";
+
+export const createPaypalOrder = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({ bookingId: z.string().uuid(), amount: z.number().positive(), currency: z.string().length(3) })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_SECRET;
+    const apiBase = process.env.PAYPAL_MODE === "sandbox" ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
+
+    if (!clientId || !clientSecret) {
+      throw new Error("Missing PayPal credentials");
+    }
+
+    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+
+    if (!tokenRes.ok) {
+      const txt = await tokenRes.text();
+      throw new Error(`PayPal token fetch failed: ${txt}`);
+    }
+
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token;
+
+    const body = {
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: data.currency,
+            value: (data.amount).toFixed(2),
+          },
+          custom_id: data.bookingId,
+        },
+      ],
+      application_context: {
+        brand_name: "Pro Diving Asia",
+        user_action: "PAY_NOW",
+        return_url: `${process.env.BASE_URL || ""}/payment/complete`,
+        cancel_url: `${process.env.BASE_URL || ""}/book`,
+      },
+    };
+
+    const orderRes = await fetch(`${apiBase}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!orderRes.ok) {
+      const txt = await orderRes.text();
+      throw new Error(`Create PayPal order failed: ${txt}`);
+    }
+
+    const orderJson = await orderRes.json();
+    const approveLink = (orderJson.links || []).find((l: any) => l.rel === "approve")?.href;
+    return { approvalUrl: approveLink, orderId: orderJson.id };
+  });
+

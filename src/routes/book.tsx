@@ -8,6 +8,7 @@ import { z } from "zod";
 import { courses } from "@/data/diving";
 import { supabase } from "@/integrations/supabase/client";
 import { notifyAdminOfBookingRequest } from "@/lib/notification.functions";
+import { createPaypalOrder } from "@/lib/payments.functions";
 
 
 export const Route = createFileRoute("/book")({
@@ -76,10 +77,12 @@ const getDepositAmount = (trip: string) => {
 function BookPage() {
   const { course } = Route.useSearch();
   const notifyBooking = useServerFn(notifyAdminOfBookingRequest);
+  const createOrder = useServerFn(createPaypalOrder);
   const preselected = courses.find((c) => c.slug === course)?.name ?? trips[0];
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pendingBooking, setPendingBooking] = useState<BookingDraft | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
   const [step, setStep] = useState<"form" | "deposit">("form");
   const [selectedTrip, setSelectedTrip] = useState(preselected);
   const [depositProcessing, setDepositProcessing] = useState(false);
@@ -106,9 +109,11 @@ function BookPage() {
 
     setSubmitting(true);
     const { notes, ...rest } = parsed.data;
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("booking_requests")
-      .insert({ ...rest, notes: notes ?? null });
+      .insert({ ...rest, notes: notes ?? null })
+      .select()
+      .maybeSingle();
 
     if (error) {
       setSubmitting(false);
@@ -116,6 +121,7 @@ function BookPage() {
       return;
     }
 
+    setBookingId(inserted?.id ?? null);
     setPendingBooking(parsed.data);
 
     if (parsed.data.deposit_requested) {
@@ -146,18 +152,29 @@ function BookPage() {
     setDepositProcessing(true);
 
     try {
-      // Open PayPal.me link in a new tab (use USD amount if available)
-      const url = depositAmount
-        ? `https://paypal.me/prodivingasia/${depositAmount.usd}`
-        : "https://paypal.me/prodivingasia";
-      if (typeof window !== "undefined") {
-        window.open(url, "_blank", "noopener,noreferrer");
+      if (!bookingId) {
+        toast.error("Booking id missing — please try again.");
+        return;
       }
-      toast.success("Opening PayPal — complete the payment to confirm your booking.");
-      // Mark booking as sent locally; admin already notified earlier.
-      setSent(true);
-      setPendingBooking(null);
-      setStep("form");
+
+      if (!depositAmount) {
+        // fallback to PayPal.me
+        const url = "https://paypal.me/prodivingasia";
+        if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
+        toast.success("Opening PayPal — complete the payment to confirm your booking.");
+        setSent(true);
+        setPendingBooking(null);
+        setStep("form");
+        return;
+      }
+
+      const resp = await createOrder({ bookingId, amount: depositAmount.usd, currency: "USD" });
+      const approval = resp?.approvalUrl;
+      if (approval && typeof window !== "undefined") {
+        window.location.href = approval;
+        return;
+      }
+      toast.error("Could not start PayPal checkout. Please try the PayPal link below.");
     } finally {
       setDepositProcessing(false);
     }
