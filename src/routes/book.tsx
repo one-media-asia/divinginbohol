@@ -146,8 +146,15 @@ function BookPage() {
     setDepositProcessing(true);
 
     try {
-      // Placeholder: integrate a real payment flow here.
-      toast.success("Deposit payment page opened. Please complete the payment to confirm your booking.");
+      // Open PayPal.me link in a new tab (use USD amount if available)
+      const url = depositAmount
+        ? `https://paypal.me/prodivingasia/${depositAmount.usd}`
+        : "https://paypal.me/prodivingasia";
+      if (typeof window !== "undefined") {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+      toast.success("Opening PayPal — complete the payment to confirm your booking.");
+      // Mark booking as sent locally; admin already notified earlier.
       setSent(true);
       setPendingBooking(null);
       setStep("form");
