@@ -177,3 +177,75 @@ export const createPaypalOrder = createServerFn({ method: "POST" })
     return { approvalUrl: approveLink, orderId: orderJson.id };
   });
 
+export const capturePaypalOrder = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ orderId: z.string().min(1) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_SECRET;
+    const apiBase = process.env.PAYPAL_MODE === "sandbox" ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
+
+    if (!clientId || !clientSecret) throw new Error("Missing PayPal credentials");
+
+    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+
+    if (!tokenRes.ok) {
+      const txt = await tokenRes.text();
+      throw new Error(`PayPal token fetch failed: ${txt}`);
+    }
+
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token;
+
+    // Fetch order to read custom_id (booking id)
+    const orderRes = await fetch(`${apiBase}/v2/checkout/orders/${data.orderId}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!orderRes.ok) {
+      const txt = await orderRes.text();
+      throw new Error(`Fetch PayPal order failed: ${txt}`);
+    }
+
+    const orderJson = await orderRes.json();
+    const bookingId = orderJson.purchase_units?.[0]?.custom_id;
+    if (!bookingId) throw new Error("Order missing booking id (custom_id)");
+
+    // Capture the order
+    const captureRes = await fetch(`${apiBase}/v2/checkout/orders/${data.orderId}/capture`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    });
+
+    if (!captureRes.ok) {
+      const txt = await captureRes.text();
+      throw new Error(`Capture failed: ${txt}`);
+    }
+
+    const captureJson = await captureRes.json();
+    const captureId = captureJson.id ?? captureJson.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? null;
+
+    // Update booking in DB
+    try {
+      const { error } = await context.supabase
+        .from("booking_requests")
+        .update({ paid: true, paid_at: new Date().toISOString(), payment_reference: captureId })
+        .eq("id", bookingId);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Failed to update booking after capture", err);
+      throw new Error("Failed to update booking");
+    }
+
+    return { ok: true, bookingId, captureId };
+  });
+

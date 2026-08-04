@@ -27,6 +27,27 @@ export const listBookings = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const getReconciliation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: paid, error: errPaid } = await context.supabase
+      .from("booking_requests")
+      .select("*")
+      .eq("paid", true)
+      .order("paid_at", { ascending: false });
+    if (errPaid) throw errPaid;
+
+    const { data: unmatched, error: errUnmatched } = await context.supabase
+      .from("booking_requests")
+      .select("*")
+      .eq("deposit_requested", true)
+      .eq("paid", false)
+      .order("created_at", { ascending: false });
+    if (errUnmatched) throw errUnmatched;
+
+    return { paid: paid ?? [], unmatched: unmatched ?? [] };
+  });
+
 export const updateBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
