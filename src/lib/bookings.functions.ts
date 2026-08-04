@@ -39,17 +39,21 @@ export const updateBooking = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { id, ...patch } = data;
+    const patch: { status?: "new" | "confirmed" | "declined" | "archived"; admin_notes?: string | null } = {};
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.admin_notes !== undefined) patch.admin_notes = data.admin_notes;
+
     const { data: row, error } = await context.supabase
       .from("booking_requests")
       .update(patch)
-      .eq("id", id)
+      .eq("id", data.id)
       .select()
       .maybeSingle();
     if (error) throw error;
     if (!row) throw new Error("Not allowed to update this request");
     return row;
   });
+
 
 export const deleteBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
