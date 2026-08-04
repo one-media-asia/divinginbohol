@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn, useClient } from "@tanstack/react-start";
 import { getReconciliation, updateBooking } from "@/lib/bookings.functions";
+import { simulatePaypalWebhook } from "@/lib/dev.functions";
 
 export const Route = createFileRoute("/_authenticated/reconciliation")({
   head: () => ({ meta: [{ title: "Reconciliation — Pro Diving Asia" }] }),
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/reconciliation")({
 function ReconciliationPage() {
   const fetcher = useServerFn(getReconciliation);
   const togglePaid = useServerFn(updateBooking);
+  const simulateWebhook = useServerFn(simulatePaypalWebhook);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<{ paid: any[]; unmatched: any[] } | null>(null);
 
@@ -90,6 +92,20 @@ function ReconciliationPage() {
                     <div className="flex gap-2">
                       <a href={`mailto:${u.email}?subject=Payment%20received%20for%20your%20booking`} className="btn-outline">Contact</a>
                       <button onClick={() => markPaid(u.id)} className="btn-primary">Mark paid</button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await simulateWebhook({ bookingId: u.id });
+                            await load();
+                          } catch (err) {
+                            console.error(err);
+                            alert("Simulation failed");
+                          }
+                        }}
+                        className="btn-ghost"
+                      >
+                        Simulate webhook
+                      </button>
                     </div>
                   </li>
                 ))}
