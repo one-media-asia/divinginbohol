@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, MapPin, Phone } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
 
 import { courses } from "@/data/diving";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/book")({
   validateSearch: (search: Record<string, unknown>) => ({
