@@ -37,6 +37,7 @@ function AdminPage() {
   const saveBooking = useServerFn(updateBooking);
 
   const [status, setStatus] = useState<"all" | Status>("all");
+  const [paidFilter, setPaidFilter] = useState<"all" | "paid" | "unpaid">("all");
   const [term, setTerm] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [draftNotes, setDraftNotes] = useState("");
@@ -62,6 +63,10 @@ function AdminPage() {
     const q = term.trim().toLowerCase();
     return list.filter((b) => {
       if (status !== "all" && b.status !== status) return false;
+      if (paidFilter !== "all") {
+        if (paidFilter === "paid" && !b.paid) return false;
+        if (paidFilter === "unpaid" && b.paid) return false;
+      }
       if (!q) return true;
       return (
         b.full_name.toLowerCase().includes(q) ||
@@ -142,6 +147,21 @@ function AdminPage() {
             </button>
           ))}
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground mr-2">Payment</span>
+          {(["all", "paid", "unpaid"] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPaidFilter(p)}
+              className={`rounded-full px-3 py-2 text-xs font-semibold capitalize transition ${
+                paidFilter === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </div>
 
       {bookingsQuery.isLoading ? (
@@ -185,12 +205,23 @@ function AdminPage() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       Deposit requested: {b.deposit_requested ? "Yes (10% deposit)" : "No"}
                     </p>
+                    <p className="mt-2 text-sm text-muted-foreground">Paid: {b.paid ? "Yes" : "No"}</p>
                     {b.notes ? (
                       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{b.notes}</p>
                     ) : null}
                   </div>
 
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={mutation.isPending}
+                      onClick={() =>
+                        mutation.mutate({ data: { id: b.id, paid: !b.paid } })
+                      }
+                      className="rounded-full px-3 py-1.5 text-xs font-semibold transition bg-muted hover:bg-muted/70"
+                    >
+                      {b.paid ? "Mark unpaid" : "Mark paid"}
+                    </button>
                     {statuses.map((s) => (
                       <button
                         key={s}

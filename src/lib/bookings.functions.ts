@@ -35,13 +35,15 @@ export const updateBooking = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         status: statusSchema.optional(),
         admin_notes: z.string().trim().max(2000).nullable().optional(),
+        paid: z.boolean().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: { status?: "new" | "confirmed" | "declined" | "archived"; admin_notes?: string | null } = {};
+    const patch: { status?: "new" | "confirmed" | "declined" | "archived"; admin_notes?: string | null; paid?: boolean } = {};
     if (data.status !== undefined) patch.status = data.status;
     if (data.admin_notes !== undefined) patch.admin_notes = data.admin_notes;
+    if (data.paid !== undefined) patch.paid = data.paid;
 
     const { data: row, error } = await context.supabase
       .from("booking_requests")
