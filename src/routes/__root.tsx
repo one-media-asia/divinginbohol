@@ -77,14 +77,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Bohol Dive Co. — Scuba Diving in Panglao, Philippines" },
+      {
+        name: "description",
+        content:
+          "PADI dive centre on Panglao Island, Bohol. Daily boats to Balicasag, Napaling and Pamilacan, plus courses from Open Water to Divemaster.",
+      },
+      { property: "og:title", content: "Bohol Dive Co. — Diving in Bohol, Philippines" },
+      {
+        property: "og:description",
+        content: "Book fun dives and PADI courses on Panglao Island, Bohol.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Bohol Dive Co." },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -92,8 +98,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap",
+      },
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
