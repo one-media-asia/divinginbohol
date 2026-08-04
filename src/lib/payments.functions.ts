@@ -153,7 +153,8 @@ export const createPaypalOrder = createServerFn({ method: "POST" })
       application_context: {
         brand_name: "Pro Diving Asia",
         user_action: "PAY_NOW",
-        return_url: `${process.env.BASE_URL || ""}/payment/complete`,
+        // Return to booking page — keep flow simple (no server-side capture)
+        return_url: `${process.env.BASE_URL || ""}/book?payment=success`,
         cancel_url: `${process.env.BASE_URL || ""}/book`,
       },
     };
