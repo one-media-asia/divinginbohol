@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Anchor, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import logoImg from "@/assets/logo-divinginasia.avif";
 
 const links = [
   { to: "/", label: "Home" },
@@ -15,11 +16,13 @@ export function SiteNav() {
   return (
     <header className="absolute inset-x-0 top-0 z-50">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
-        <Link to="/" className="flex items-center gap-2 text-deep-foreground">
-          <span className="flex size-9 items-center justify-center rounded-full bg-primary/90">
-            <Anchor className="size-4 text-primary-foreground" />
-          </span>
-          <span className="font-display text-lg font-bold tracking-tight">Bohol Dive Co.</span>
+        <Link to="/" className="flex items-center gap-3 text-deep-foreground">
+          <img
+            src={logoImg}
+            alt="Pro Diving Asia logo"
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <span className="font-display text-lg font-bold tracking-tight">Pro Diving Asia</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

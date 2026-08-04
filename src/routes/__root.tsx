@@ -83,21 +83,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Bohol Dive Co. — Book Scuba Diving in Panglao, Bohol" },
+      { title: "Pro Diving Asia — Book Scuba Diving in Panglao, Bohol" },
       {
         name: "description",
         content:
           "Book daily fun dives and PADI courses in Bohol, Philippines. Balicasag walls, the Napaling sardine run and Pamilacan pinnacles from Alona Beach.",
       },
-      { property: "og:title", content: "Bohol Dive Co. — Book Scuba Diving in Panglao, Bohol" },
+      { property: "og:title", content: "Pro Diving Asia — Book Scuba Diving in Panglao, Bohol" },
       {
         property: "og:description",
         content: "Book daily fun dives and PADI courses in Bohol, Philippines. Balicasag walls, the Napaling sardine run and Pamilacan pinnacles from Alona Beach.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Bohol Dive Co." },
+      { property: "og:site_name", content: "Pro Diving Asia" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Bohol Dive Co. — Book Scuba Diving in Panglao, Bohol" },
+      { name: "twitter:title", content: "Pro Diving Asia — Book Scuba Diving in Panglao, Bohol" },
       { name: "twitter:description", content: "Book daily fun dives and PADI courses in Bohol, Philippines. Balicasag walls, the Napaling sardine run and Pamilacan pinnacles from Alona Beach." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e1313551-c655-49f3-9a39-8a10526701a6/id-preview-4a71a6eb--6cd61841-489c-40e7-812d-5eb44469e5aa.lovable.app-1785859723481.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e1313551-c655-49f3-9a39-8a10526701a6/id-preview-4a71a6eb--6cd61841-489c-40e7-812d-5eb44469e5aa.lovable.app-1785859723481.png" },

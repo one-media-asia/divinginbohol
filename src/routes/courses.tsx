@@ -6,7 +6,7 @@ import { courses } from "@/data/diving";
 export const Route = createFileRoute("/courses")({
   head: () => ({
     meta: [
-      { title: "PADI Dive Courses in Bohol — Bohol Dive Co." },
+      { title: "PADI Dive Courses in Bohol — Pro Diving Asia" },
       {
         name: "description",
         content:

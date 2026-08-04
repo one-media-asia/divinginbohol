@@ -16,7 +16,7 @@ export const Route = createFileRoute("/book")({
   }),
   head: () => ({
     meta: [
-      { title: "Book a Dive in Bohol — Bohol Dive Co." },
+      { title: "Book a Dive in Bohol — Pro Diving Asia" },
       {
         name: "description",
         content:

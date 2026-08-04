@@ -42,7 +42,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
         ? (ctx as Record<string, unknown>).data as BookingNotificationRequest
         : (ctx as BookingNotificationRequest);
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "dive@boholdiveco.ph";
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "bookings@divinginasia.com";
     const EMAIL_FROM = process.env.RESEND_FROM || process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || `no-reply@${new URL(process.env.SUPABASE_URL ?? "example.com").hostname}`;
 
     if (!RESEND_API_KEY) {
@@ -103,7 +103,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
       await sendEmail(
         data.email,
         "Your dive booking request has been received",
-        `Hi ${data.full_name},\n\nThanks for your booking request. We have received it and will confirm availability by email shortly.\n\nYour request details:\n- Preferred date: ${data.preferred_date}\n- Divers: ${data.divers}\n- Trip: ${data.trip}\n- Certification level: ${data.certification_level}\n- Notes: ${data.notes ?? "(none)"}\n\nSee you soon!\nBohol Dive Co.`,
+        `Hi ${data.full_name},\n\nThanks for your booking request. We have received it and will confirm availability by email shortly.\n\nYour request details:\n- Preferred date: ${data.preferred_date}\n- Divers: ${data.divers}\n- Trip: ${data.trip}\n- Certification level: ${data.certification_level}\n- Notes: ${data.notes ?? "(none)"}\n\nSee you soon!\nPro Diving Asia`,
         `<p>Hi ${data.full_name},</p>
 <p>Thanks for your booking request. We have received it and will confirm availability by email shortly.</p>
 <h3>Your request details</h3>
@@ -114,7 +114,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
   <li><strong>Certification level:</strong> ${data.certification_level}</li>
   <li><strong>Notes:</strong> ${data.notes ? data.notes : "(none)"}</li>
 </ul>
-<p>See you soon!<br/>Bohol Dive Co.</p>`,
+<p>See you soon!<br/>Pro Diving Asia</p>`,
       );
     } catch (confirmError) {
       console.error("Customer confirmation email failed", confirmError);

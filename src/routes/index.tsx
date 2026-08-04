@@ -10,13 +10,13 @@ import { courses, diveSites } from "@/data/diving";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bohol Dive Co. — Book Scuba Diving in Panglao, Bohol" },
+      { title: "Pro Diving Asia — Book Scuba Diving in Panglao, Bohol" },
       {
         name: "description",
         content:
           "Book daily fun dives and PADI courses in Bohol, Philippines. Balicasag walls, the Napaling sardine run and Pamilacan pinnacles from Alona Beach.",
       },
-      { property: "og:title", content: "Bohol Dive Co. — Book Scuba Diving in Panglao, Bohol" },
+      { property: "og:title", content: "Pro Diving Asia — Book Scuba Diving in Panglao, Bohol" },
       {
         property: "og:description",
         content:

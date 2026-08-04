@@ -1,16 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { Anchor, Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
+import logoImg from "@/assets/logo-divinginasia.avif";
 
 export function SiteFooter() {
   return (
     <footer className="surface-deep">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-full bg-primary">
-              <Anchor className="size-4 text-primary-foreground" />
-            </span>
-            <span className="font-display text-lg font-bold">Bohol Dive Co.</span>
+          <div className="flex items-center gap-3">
+            <img
+              src={logoImg}
+              alt="Pro Diving Asia logo"
+              className="h-10 w-10 rounded-full object-cover"
+            />
+            <span className="font-display text-lg font-bold">Pro Diving Asia</span>
           </div>
           <p className="mt-4 max-w-xs text-sm text-deep-foreground/70">
             PADI dive centre on Panglao Island, running daily boats to Balicasag, Pamilacan and
@@ -38,12 +41,12 @@ export function SiteFooter() {
             <Phone className="size-4 text-lagoon" /> +63 917 555 0142
           </p>
           <p className="flex items-center gap-2">
-            <Mail className="size-4 text-lagoon" /> dive@boholdiveco.ph
+            <Mail className="size-4 text-lagoon" /> bookings@divinginasia.com
           </p>
         </div>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-deep-foreground/55">
-        © {new Date().getFullYear()} Bohol Dive Co. — Panglao Island, Philippines
+        © {new Date().getFullYear()} Pro Diving Asia — Panglao Island, Philippines
       </div>
     </footer>
   );

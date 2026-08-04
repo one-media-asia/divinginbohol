@@ -11,8 +11,8 @@ import { isAdmin, listBookings, updateBooking } from "@/lib/bookings.functions";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Booking Requests — Bohol Dive Co. Admin" },
-      { name: "description", content: "Internal dashboard for Bohol Dive Co. booking requests." },
+      { title: "Booking Requests — Pro Diving Asia Admin" },
+      { name: "description", content: "Internal dashboard for Pro Diving Asia booking requests." },
       { name: "robots", content: "noindex" },
     ],
   }),
