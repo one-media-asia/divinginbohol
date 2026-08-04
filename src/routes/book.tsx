@@ -89,16 +89,15 @@ function BookPage() {
       return;
     }
 
-    const { notifyAdminOfBookingRequest } = await import("@/lib/notification.functions");
-    const notifyResult = await notifyAdminOfBookingRequest(parsed.data);
-
-    setSubmitting(false);
-    if (!notifyResult.ok) {
-      toast.error("Booking saved, but admin notification failed.");
-      return;
-    }
-
     setSent(true);
+    setSubmitting(false);
+
+    import("@/lib/notification.functions")
+      .then(({ notifyAdminOfBookingRequest }) => notifyAdminOfBookingRequest(parsed.data))
+      .catch((notifyError) => {
+        console.error("Admin notification failed", notifyError);
+        toast.error("Booking request saved, but we could not send the admin notification.");
+      });
   }
 
 
