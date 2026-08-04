@@ -56,12 +56,34 @@ const bookingSchema = z.object({
   notes: z.string().trim().max(1000).optional(),
 });
 
+type BookingDraft = z.infer<typeof bookingSchema>;
+
+const getCourseForTrip = (trip: string) => courses.find((course) => course.name === trip);
+
+const formatCurrency = (value: number, currency: "PHP" | "USD") =>
+  currency === "PHP" ? `PHP ${value.toLocaleString()}` : `USD $${value.toFixed(0)}`;
+
+const getDepositAmount = (trip: string) => {
+  const course = getCourseForTrip(trip);
+  if (!course) return null;
+  return {
+    php: Math.round(course.php * 0.1),
+    usd: Math.round(course.usd * 0.1),
+    course,
+  };
+};
+
 function BookPage() {
   const { course } = Route.useSearch();
   const notifyBooking = useServerFn(notifyAdminOfBookingRequest);
   const preselected = courses.find((c) => c.slug === course)?.name ?? trips[0];
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState<BookingDraft | null>(null);
+  const [step, setStep] = useState<"form" | "deposit">("form");
+  const [selectedTrip, setSelectedTrip] = useState(preselected);
+  const [depositProcessing, setDepositProcessing] = useState(false);
+  const depositAmount = getDepositAmount(pendingBooking?.trip ?? selectedTrip);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -94,6 +116,20 @@ function BookPage() {
       return;
     }
 
+    setPendingBooking(parsed.data);
+
+    if (parsed.data.deposit_requested) {
+      setStep("deposit");
+      setSubmitting(false);
+      try {
+        await notifyBooking({ data: parsed.data });
+      } catch (notifyError) {
+        console.error("Admin notification failed", notifyError);
+        toast.error("Booking request saved, but we could not send the admin notification.");
+      }
+      return;
+    }
+
     setSent(true);
     setSubmitting(false);
 
@@ -105,6 +141,20 @@ function BookPage() {
     }
   }
 
+  async function handleDepositPayment() {
+    if (!pendingBooking) return;
+    setDepositProcessing(true);
+
+    try {
+      // Placeholder: integrate a real payment flow here.
+      toast.success("Deposit payment page opened. Please complete the payment to confirm your booking.");
+      setSent(true);
+      setPendingBooking(null);
+      setStep("form");
+    } finally {
+      setDepositProcessing(false);
+    }
+  }
 
   return (
     <>
@@ -133,6 +183,80 @@ function BookPage() {
               <button type="button" className="btn-ghost" onClick={() => setSent(false)}>
                 Send another request
               </button>
+            </div>
+          ) : step === "deposit" && pendingBooking ? (
+            <div className="grid gap-6">
+              <div className="rounded-3xl border border-border bg-card p-6">
+                <h2 className="text-2xl">Deposit payment</h2>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  You have chosen to secure your booking with a 10% deposit. Complete the payment to keep your spot.
+                </p>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-surface p-5">
+                    <p className="text-sm text-muted-foreground">Selected trip</p>
+                    <p className="mt-2 text-lg font-semibold">{pendingBooking.trip}</p>
+                  </div>
+                  <div className="rounded-3xl bg-surface p-5">
+                    <p className="text-sm text-muted-foreground">Deposit amount</p>
+                    <p className="mt-2 text-lg font-semibold">
+                      {depositAmount ? (
+                        <>
+                          {formatCurrency(depositAmount.php, "PHP")} / {formatCurrency(depositAmount.usd, "USD")}
+                        </>
+                      ) : (
+                        "Contact us for the deposit amount"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-card p-6">
+                <h3 className="text-lg">Complete payment</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We currently offer deposit payment by bank transfer or direct checkout link. After payment, we will confirm your booking.
+                </p>
+                <button
+                  type="button"
+                  disabled={depositProcessing}
+                  onClick={handleDepositPayment}
+                  className="btn-primary mt-6"
+                >
+                  {depositProcessing ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" /> Processing…
+                    </span>
+                  ) : (
+                    "Proceed to payment"
+                  )}
+                </button>
+                <div className="mt-4">
+                  {depositAmount ? (
+                    <a
+                      href={`https://paypal.me/prodivingasia/${depositAmount.usd}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-outline mt-2 inline-flex items-center justify-center"
+                    >
+                      Pay via PayPal (USD {depositAmount.usd})
+                    </a>
+                  ) : (
+                    <a
+                      href="https://paypal.me/prodivingasia"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-outline mt-2 inline-flex items-center justify-center"
+                    >
+                      Pay via PayPal
+                    </a>
+                  )}
+
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    <p>Or bank transfer: Account name Pro Diving Asia — please include your booking name.</p>
+                    <p className="mt-1">After payment, reply to the confirmation email with the payment reference.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <form className="grid gap-5 sm:grid-cols-2" onSubmit={handleSubmit}>
@@ -169,7 +293,12 @@ function BookPage() {
               </label>
               <label className="text-sm font-medium sm:col-span-2">
                 What would you like to do?
-                <select name="trip" defaultValue={preselected} className={fieldClass}>
+                <select
+                  name="trip"
+                  value={selectedTrip}
+                  onChange={(e) => setSelectedTrip(e.target.value)}
+                  className={fieldClass}
+                >
                   {trips.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -205,6 +334,15 @@ function BookPage() {
                   Yes, I'd like to pay a <strong>10% deposit</strong> now to secure my spot.
                 </span>
               </label>
+              {depositAmount ? (
+                <div className="sm:col-span-2 rounded-2xl border border-border bg-surface p-4 text-sm text-muted-foreground">
+                  Estimated deposit for <strong>{selectedTrip}</strong>: {formatCurrency(depositAmount.php, "PHP")} / {formatCurrency(depositAmount.usd, "USD")}
+                </div>
+              ) : (
+                <div className="sm:col-span-2 rounded-2xl border border-border bg-surface p-4 text-sm text-muted-foreground">
+                  For trips that are not PADI courses, we will follow up with a deposit amount after reviewing your booking.
+                </div>
+              )}
               <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
                 {submitting ? (
                   <span className="inline-flex items-center gap-2">

@@ -55,6 +55,12 @@ function CoursesPage() {
                 PHP {c.php.toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground">≈ USD ${c.usd} per person</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                10% deposit: PHP {Math.round(c.php * 0.1).toLocaleString()} / USD ${Math.round(c.usd * 0.1)}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                10% deposit: PHP {Math.round(c.php * 0.1).toLocaleString()} / USD ${Math.round(c.usd * 0.1)}
+              </p>
 
               <div className="mt-4 flex flex-wrap gap-4 text-xs font-medium text-muted-foreground">
                 <span className="flex items-center gap-1.5">
