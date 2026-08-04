@@ -8,7 +8,6 @@ import { z } from "zod";
 import { courses } from "@/data/diving";
 import { supabase } from "@/integrations/supabase/client";
 import { notifyAdminOfBookingRequest } from "@/lib/notification.functions";
-import { createPaypalOrder } from "@/lib/payments.functions";
 
 
 export const Route = createFileRoute("/book")({
@@ -77,15 +76,12 @@ const getDepositAmount = (trip: string) => {
 function BookPage() {
   const { course } = Route.useSearch();
   const notifyBooking = useServerFn(notifyAdminOfBookingRequest);
-  const createOrder = useServerFn(createPaypalOrder);
   const preselected = courses.find((c) => c.slug === course)?.name ?? trips[0];
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pendingBooking, setPendingBooking] = useState<BookingDraft | null>(null);
-  const [bookingId, setBookingId] = useState<string | null>(null);
   const [step, setStep] = useState<"form" | "deposit">("form");
   const [selectedTrip, setSelectedTrip] = useState(preselected);
-  const [depositProcessing, setDepositProcessing] = useState(false);
   const depositAmount = getDepositAmount(pendingBooking?.trip ?? selectedTrip);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -109,11 +105,9 @@ function BookPage() {
 
     setSubmitting(true);
     const { notes, ...rest } = parsed.data;
-    const { data: inserted, error } = await supabase
+    const { error } = await supabase
       .from("booking_requests")
-      .insert({ ...rest, notes: notes ?? null })
-      .select()
-      .maybeSingle();
+      .insert({ ...rest, notes: notes ?? null });
 
     if (error) {
       setSubmitting(false);
@@ -121,7 +115,6 @@ function BookPage() {
       return;
     }
 
-    setBookingId(inserted?.id ?? null);
     setPendingBooking(parsed.data);
 
     if (parsed.data.deposit_requested) {
@@ -144,39 +137,6 @@ function BookPage() {
     } catch (notifyError) {
       console.error("Admin notification failed", notifyError);
       toast.error("Booking request saved, but we could not send the admin notification.");
-    }
-  }
-
-  async function handleDepositPayment() {
-    if (!pendingBooking) return;
-    setDepositProcessing(true);
-
-    try {
-      if (!bookingId) {
-        toast.error("Booking id missing — please try again.");
-        return;
-      }
-
-      if (!depositAmount) {
-        // fallback to PayPal.me
-        const url = "https://paypal.me/prodivingasia";
-        if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
-        toast.success("Opening PayPal — complete the payment to confirm your booking.");
-        setSent(true);
-        setPendingBooking(null);
-        setStep("form");
-        return;
-      }
-
-      const resp = await createOrder({ bookingId, amount: depositAmount.usd, currency: "USD" });
-      const approval = resp?.approvalUrl;
-      if (approval && typeof window !== "undefined") {
-        window.location.href = approval;
-        return;
-      }
-      toast.error("Could not start PayPal checkout. Please try the PayPal link below.");
-    } finally {
-      setDepositProcessing(false);
     }
   }
 
@@ -240,27 +200,13 @@ function BookPage() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   We currently offer deposit payment by bank transfer or direct checkout link. After payment, we will confirm your booking.
                 </p>
-                <button
-                  type="button"
-                  disabled={depositProcessing}
-                  onClick={handleDepositPayment}
-                  className="btn-primary mt-6"
-                >
-                  {depositProcessing ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="size-4 animate-spin" /> Processing…
-                    </span>
-                  ) : (
-                    "Proceed to payment"
-                  )}
-                </button>
-                <div className="mt-4">
+                  <div className="mt-4">
                   {depositAmount ? (
                     <a
                       href={`https://paypal.me/prodivingasia/${depositAmount.usd}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-outline mt-2 inline-flex items-center justify-center"
+                      className="btn-primary mt-2 inline-flex items-center justify-center"
                     >
                       Pay via PayPal (USD {depositAmount.usd})
                     </a>
@@ -269,7 +215,7 @@ function BookPage() {
                       href="https://paypal.me/prodivingasia"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-outline mt-2 inline-flex items-center justify-center"
+                      className="btn-primary mt-2 inline-flex items-center justify-center"
                     >
                       Pay via PayPal
                     </a>
