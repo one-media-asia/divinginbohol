@@ -13,6 +13,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteNav } from "../components/site-nav";
 import { SiteFooter } from "../components/site-footer";
+import { Toaster } from "../components/ui/sonner";
+import { supabase } from "../integrations/supabase/client";
+
 
 
 function NotFoundComponent() {
