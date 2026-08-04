@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { courses } from "@/data/diving";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyAdminOfBookingRequest } from "@/lib/notification.functions";
 
 
 export const Route = createFileRoute("/book")({
@@ -55,6 +57,7 @@ const bookingSchema = z.object({
 
 function BookPage() {
   const { course } = Route.useSearch();
+  const notifyBooking = useServerFn(notifyAdminOfBookingRequest);
   const preselected = courses.find((c) => c.slug === course)?.name ?? trips[0];
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -92,12 +95,12 @@ function BookPage() {
     setSent(true);
     setSubmitting(false);
 
-    import("@/lib/notification.functions")
-      .then(({ notifyAdminOfBookingRequest }) => notifyAdminOfBookingRequest(parsed.data))
-      .catch((notifyError) => {
-        console.error("Admin notification failed", notifyError);
-        toast.error("Booking request saved, but we could not send the admin notification.");
-      });
+    try {
+      await notifyBooking({ data: parsed.data });
+    } catch (notifyError) {
+      console.error("Admin notification failed", notifyError);
+      toast.error("Booking request saved, but we could not send the admin notification.");
+    }
   }
 
 
