@@ -82,12 +82,22 @@ function BookPage() {
     const { error } = await supabase
       .from("booking_requests")
       .insert({ ...rest, notes: notes ?? null });
-    setSubmitting(false);
 
     if (error) {
+      setSubmitting(false);
       toast.error("We couldn't send your request. Please try again or email us directly.");
       return;
     }
+
+    const { notifyAdminOfBookingRequest } = await import("@/lib/notification.functions");
+    const notifyResult = await notifyAdminOfBookingRequest(parsed.data);
+
+    setSubmitting(false);
+    if (!notifyResult.ok) {
+      toast.error("Booking saved, but admin notification failed.");
+      return;
+    }
+
     setSent(true);
   }
 
