@@ -121,13 +121,8 @@ function BookPage() {
               </button>
             </div>
           ) : (
-            <form
-              className="grid gap-5 sm:grid-cols-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSent(true);
-              }}
-            >
+            <form className="grid gap-5 sm:grid-cols-2" onSubmit={handleSubmit}>
+
               <label className="text-sm font-medium sm:col-span-1">
                 Full name
                 <input required name="name" className={fieldClass} placeholder="Maria Santos" />
@@ -186,9 +181,16 @@ function BookPage() {
                   placeholder="Staying at Alona Beach, need a shortie wetsuit in size M."
                 />
               </label>
-              <button type="submit" className="btn-primary sm:col-span-2">
-                Send booking request
+              <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
+                {submitting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="size-4 animate-spin" /> Sending…
+                  </span>
+                ) : (
+                  "Send booking request"
+                )}
               </button>
+
             </form>
           )}
         </div>
