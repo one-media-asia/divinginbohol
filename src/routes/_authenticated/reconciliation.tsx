@@ -15,6 +15,8 @@ function ReconciliationPage() {
   const simulateWebhook = useServerFn(simulatePaypalWebhook);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<{ paid: any[]; unmatched: any[] } | null>(null);
+  const [simulateTarget, setSimulateTarget] = useState<string | null>(null);
+  const [simulateProcessing, setSimulateProcessing] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -34,6 +36,25 @@ function ReconciliationPage() {
       console.error(err);
       alert("Failed to mark paid");
     }
+  }
+
+  async function confirmSimulate() {
+    if (!simulateTarget) return;
+    setSimulateProcessing(true);
+    try {
+      await simulateWebhook({ bookingId: simulateTarget });
+      await load();
+      setSimulateTarget(null);
+    } catch (err) {
+      console.error(err);
+      alert("Simulation failed");
+    } finally {
+      setSimulateProcessing(false);
+    }
+  }
+
+  function cancelSimulate() {
+    setSimulateTarget(null);
   }
 
   return (
@@ -93,15 +114,7 @@ function ReconciliationPage() {
                       <a href={`mailto:${u.email}?subject=Payment%20received%20for%20your%20booking`} className="btn-outline">Contact</a>
                       <button onClick={() => markPaid(u.id)} className="btn-primary">Mark paid</button>
                       <button
-                        onClick={async () => {
-                          try {
-                            await simulateWebhook({ bookingId: u.id });
-                            await load();
-                          } catch (err) {
-                            console.error(err);
-                            alert("Simulation failed");
-                          }
-                        }}
+                        onClick={() => setSimulateTarget(u.id)}
                         className="btn-ghost"
                       >
                         Simulate webhook
@@ -116,6 +129,21 @@ function ReconciliationPage() {
           </div>
         </div>
       </div>
+        {simulateTarget ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="rounded-lg bg-white p-6 shadow-lg w-full max-w-md">
+              <h3 className="text-lg font-semibold">Simulate PayPal webhook?</h3>
+              <p className="mt-3 text-sm text-muted-foreground">This will mark the booking as paid in the database. Continue?</p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button onClick={cancelSimulate} className="btn-outline">Cancel</button>
+                <button onClick={confirmSimulate} disabled={simulateProcessing} className="btn-primary">
+                  {simulateProcessing ? "Simulating…" : "Yes, simulate"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
     </div>
   );
 }
+
