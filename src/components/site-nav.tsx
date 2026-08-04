@@ -1,0 +1,68 @@
+import { Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Anchor, Menu, X } from "lucide-react";
+
+const links = [
+  { to: "/", label: "Home" },
+  { to: "/courses", label: "Courses" },
+  { to: "/dive-sites", label: "Dive Sites" },
+  { to: "/book", label: "Book" },
+] as const;
+
+export function SiteNav() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <header className="absolute inset-x-0 top-0 z-50">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
+        <Link to="/" className="flex items-center gap-2 text-deep-foreground">
+          <span className="flex size-9 items-center justify-center rounded-full bg-primary/90">
+            <Anchor className="size-4 text-primary-foreground" />
+          </span>
+          <span className="font-display text-lg font-bold tracking-tight">Bohol Dive Co.</span>
+        </Link>
+
+        <nav className="hidden items-center gap-1 md:flex">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="rounded-full px-4 py-2 text-sm font-medium text-deep-foreground/85 transition-colors hover:bg-white/10 hover:text-deep-foreground"
+              activeProps={{ className: "bg-white/15 text-deep-foreground" }}
+              activeOptions={{ exact: l.to === "/" }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Link to="/book" className="btn-primary ml-3">
+            Book a dive
+          </Link>
+        </nav>
+
+        <button
+          type="button"
+          aria-label="Toggle menu"
+          onClick={() => setOpen((v) => !v)}
+          className="flex size-10 items-center justify-center rounded-full border border-white/40 text-deep-foreground md:hidden"
+        >
+          {open ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
+      </div>
+
+      {open && (
+        <div className="mx-5 rounded-3xl border border-white/15 bg-deep/95 p-3 backdrop-blur md:hidden">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              onClick={() => setOpen(false)}
+              className="block rounded-2xl px-4 py-3 text-sm font-medium text-deep-foreground/90 hover:bg-white/10"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </header>
+  );
+}
