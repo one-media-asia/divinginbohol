@@ -16,11 +16,11 @@ export const Route = createFileRoute("/")({
         content:
           "Book daily fun dives and PADI courses in Bohol, Philippines. Balicasag walls, the Napaling sardine run and Pamilacan pinnacles from Alona Beach.",
       },
-      { property: "og:title", content: "Book Scuba Diving in Bohol, Philippines" },
+      { property: "og:title", content: "Bohol Dive Co. — Book Scuba Diving in Panglao, Bohol" },
       {
         property: "og:description",
         content:
-          "Daily boats to Balicasag, Napaling and Pamilacan plus PADI courses from Open Water to Divemaster.",
+          "Book daily fun dives and PADI courses in Bohol, Philippines. Balicasag walls, the Napaling sardine run and Pamilacan pinnacles from Alona Beach.",
       },
       { property: "og:url", content: "/" },
     ],
