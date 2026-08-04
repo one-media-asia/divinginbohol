@@ -11,7 +11,7 @@ export function SiteFooter() {
             <img
               src={logoImg}
               alt="Pro Diving Asia logo"
-              className="h-10 w-10 rounded-full object-cover"
+              className="h-16 w-16 rounded-full object-cover"
             />
             <span className="font-display text-lg font-bold">Pro Diving Asia</span>
           </div>
@@ -35,13 +35,13 @@ export function SiteFooter() {
 
         <div className="space-y-3 text-sm text-deep-foreground/80">
           <p className="flex items-center gap-2">
-            <MapPin className="size-4 text-lagoon" /> Alona Beach, Panglao, Bohol 6340
+            <MapPin className="size-4 text-lagoon" /> Alona Beach Road, Panglao, Bohol
           </p>
           <p className="flex items-center gap-2">
             <Phone className="size-4 text-lagoon" /> +63 917 555 0142
           </p>
           <p className="flex items-center gap-2">
-            <Mail className="size-4 text-lagoon" /> bookings@divinginasia.com
+            <Mail className="size-4 text-lagoon" /> bookings@divinginaasia.com
           </p>
         </div>
       </div>

@@ -47,6 +47,7 @@ export type Database = {
           admin_notes?: string | null
           certification_level?: string
           created_at?: string
+          deposit_requested?: boolean
           divers?: number
           email?: string
           full_name?: string

@@ -20,7 +20,7 @@ export function SiteNav() {
           <img
             src={logoImg}
             alt="Pro Diving Asia logo"
-            className="h-10 w-10 rounded-full object-cover"
+            className="h-16 w-16 rounded-full object-cover"
           />
           <span className="font-display text-lg font-bold tracking-tight">Pro Diving Asia</span>
         </Link>

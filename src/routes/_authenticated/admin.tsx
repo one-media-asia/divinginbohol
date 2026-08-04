@@ -182,6 +182,9 @@ function AdminPage() {
                     <p className="mt-2 text-sm">
                       <strong className="font-semibold">{b.trip}</strong> — {b.certification_level}
                     </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Deposit requested: {b.deposit_requested ? "Yes (10% deposit)" : "No"}
+                    </p>
                     {b.notes ? (
                       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{b.notes}</p>
                     ) : null}

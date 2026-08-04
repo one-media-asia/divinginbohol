@@ -8,6 +8,7 @@ const bookingNotificationSchema = z.object({
   divers: z.coerce.number().int().min(1).max(12),
   trip: z.string().trim().min(1).max(120),
   certification_level: z.string().trim().min(1).max(60),
+  deposit_requested: z.boolean(),
   notes: z.string().trim().max(1000).optional(),
 });
 
@@ -57,6 +58,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
       `Divers: ${data.divers}`,
       `Trip: ${data.trip}`,
       `Certification level: ${data.certification_level}`,
+      `Deposit requested: ${data.deposit_requested ? "Yes (10% deposit)" : "No"}`,
       `Notes: ${data.notes ?? "(none)"}`,
     ].join("\n");
 
@@ -95,6 +97,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
   <li><strong>Divers:</strong> ${data.divers}</li>
   <li><strong>Trip:</strong> ${data.trip}</li>
   <li><strong>Certification level:</strong> ${data.certification_level}</li>
+  <li><strong>Deposit requested:</strong> ${data.deposit_requested ? "Yes (10% deposit)" : "No"}</li>
   <li><strong>Notes:</strong> ${data.notes ? data.notes : "(none)"}</li>
 </ul>`,
     );
@@ -103,7 +106,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
       await sendEmail(
         data.email,
         "Your dive booking request has been received",
-        `Hi ${data.full_name},\n\nThanks for your booking request. We have received it and will confirm availability by email shortly.\n\nYour request details:\n- Preferred date: ${data.preferred_date}\n- Divers: ${data.divers}\n- Trip: ${data.trip}\n- Certification level: ${data.certification_level}\n- Notes: ${data.notes ?? "(none)"}\n\nSee you soon!\nPro Diving Asia`,
+        `Hi ${data.full_name},\n\nThanks for your booking request. We have received it and will confirm availability by email shortly.\n\nYour request details:\n- Preferred date: ${data.preferred_date}\n- Divers: ${data.divers}\n- Trip: ${data.trip}\n- Certification level: ${data.certification_level}\n- Deposit requested: ${data.deposit_requested ? "Yes (10% deposit)" : "No"}\n- Notes: ${data.notes ?? "(none)"}\n\nSee you soon!\nPro Diving Asia`,
         `<p>Hi ${data.full_name},</p>
 <p>Thanks for your booking request. We have received it and will confirm availability by email shortly.</p>
 <h3>Your request details</h3>
@@ -112,6 +115,7 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
   <li><strong>Divers:</strong> ${data.divers}</li>
   <li><strong>Trip:</strong> ${data.trip}</li>
   <li><strong>Certification level:</strong> ${data.certification_level}</li>
+  <li><strong>Deposit requested:</strong> ${data.deposit_requested ? "Yes (10% deposit)" : "No"}</li>
   <li><strong>Notes:</strong> ${data.notes ? data.notes : "(none)"}</li>
 </ul>
 <p>See you soon!<br/>Pro Diving Asia</p>`,

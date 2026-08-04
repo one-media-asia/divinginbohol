@@ -52,6 +52,7 @@ const bookingSchema = z.object({
   divers: z.coerce.number().int().min(1).max(12),
   trip: z.string().trim().min(1).max(120),
   certification_level: z.string().trim().min(1).max(60),
+  deposit_requested: z.boolean(),
   notes: z.string().trim().max(1000).optional(),
 });
 
@@ -72,6 +73,7 @@ function BookPage() {
       divers: form.get("divers"),
       trip: form.get("trip"),
       certification_level: form.get("level"),
+      deposit_requested: form.get("deposit_requested") === "on",
       notes: form.get("notes") || undefined,
     });
 
@@ -193,6 +195,16 @@ function BookPage() {
                   placeholder="Staying at Alona Beach, need a shortie wetsuit in size M."
                 />
               </label>
+              <label className="flex items-center gap-3 text-sm font-medium sm:col-span-2">
+                <input
+                  type="checkbox"
+                  name="deposit_requested"
+                  className="h-5 w-5 rounded border-input bg-card text-primary focus:ring-primary"
+                />
+                <span>
+                  Yes, I'd like to pay a <strong>10% deposit</strong> now to secure my spot.
+                </span>
+              </label>
               <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
                 {submitting ? (
                   <span className="inline-flex items-center gap-2">
@@ -218,7 +230,7 @@ function BookPage() {
                 <Phone className="size-4 text-primary" /> +63 917 555 0142
               </p>
               <p className="flex items-center gap-2">
-                <Mail className="size-4 text-primary" /> dive@boholdiveco.ph
+                <Mail className="size-4 text-primary" /> bookings@divinginaasia.com
               </p>
             </div>
           </div>
@@ -228,7 +240,8 @@ function BookPage() {
               <li>Boats leave at 8:00 and 11:00 daily.</li>
               <li>Free hotel pickup anywhere on Panglao.</li>
               <li>Marine park fees are paid on the island (PHP 100).</li>
-              <li>No deposit — pay in cash or card at the shop.</li>
+              <li>No deposit required — pay in cash or card at the shop.</li>
+              <li>Optional 10% deposit available on the form to hold your booking.</li>
             </ul>
           </div>
         </aside>
