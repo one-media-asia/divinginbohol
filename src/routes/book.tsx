@@ -6,7 +6,7 @@ import { courses } from "@/data/diving";
 
 export const Route = createFileRoute("/book")({
   validateSearch: (search: Record<string, unknown>) => ({
-    course: typeof search.course === "string" ? search.course : undefined,
+    course: typeof search["course"] === "string" ? (search["course"] as string) : undefined,
   }),
   head: () => ({
     meta: [
