@@ -214,3 +214,45 @@
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }
+
+@layer base {
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+
+    .print-invoice,
+    .print-invoice * {
+      visibility: visible;
+    }
+
+    .print-invoice {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      background: white;
+      color: black;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .print-invoice .bg-card,
+    .print-invoice .bg-background,
+    .print-invoice .bg-muted,
+    .print-invoice .bg-primary,
+    .print-invoice .bg-secondary {
+      background: white !important;
+    }
+
+    .print-invoice * {
+      color: black !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+  }
+}

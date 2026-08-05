@@ -7,7 +7,11 @@ const links = [
   { to: "/", label: "Home" },
   { to: "/courses", label: "Courses" },
   { to: "/dive-sites", label: "Dive Sites" },
-  { to: "/book", label: "Book" },
+] as const;
+
+const locationLinks = [
+  { href: "https://divinginasia.com", label: "Thailand" },
+  { href: "https://prodiving.asia", label: "Indonesia" },
 ] as const;
 
 export function SiteNav() {
@@ -37,8 +41,19 @@ export function SiteNav() {
               {l.label}
             </Link>
           ))}
+          {locationLinks.map((location) => (
+            <a
+              key={location.href}
+              href={location.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full px-4 py-2 text-sm font-medium text-deep-foreground/85 transition-colors hover:bg-white/10 hover:text-deep-foreground"
+            >
+              {location.label}
+            </a>
+          ))}
           <Link to="/book" className="btn-primary ml-3">
-            Book a dive
+            Book now
           </Link>
         </nav>
 
@@ -63,6 +78,17 @@ export function SiteNav() {
             >
               {l.label}
             </Link>
+          ))}
+          {locationLinks.map((location) => (
+            <a
+              key={location.href}
+              href={location.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl px-4 py-3 text-sm font-medium text-deep-foreground/90 hover:bg-white/10"
+            >
+              {location.label}
+            </a>
           ))}
         </div>
       )}

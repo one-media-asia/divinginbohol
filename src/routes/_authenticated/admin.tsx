@@ -6,8 +6,16 @@ import { toast } from "sonner";
 import { Loader2, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { courses } from "@/data/diving";
 import { isAdmin, listBookings, updateBooking } from "@/lib/bookings.functions";
 import { sendInvoiceToCustomer } from "@/lib/notification.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -43,6 +51,7 @@ function AdminPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [draftNotes, setDraftNotes] = useState("");
   const [invoicePendingId, setInvoicePendingId] = useState<string | null>(null);
+  const [previewBookingId, setPreviewBookingId] = useState<string | null>(null);
 
   const adminQuery = useQuery({ queryKey: ["is-admin"], queryFn: () => fetchIsAdmin({}) });
   const bookingsQuery = useQuery({
@@ -74,6 +83,17 @@ function AdminPage() {
     });
   }, [bookingsQuery.data, status, term]);
 
+  const previewBooking = rows.find((b) => b.id === previewBookingId) ?? null;
+
+  const getDepositAmount = (trip: string) => {
+    const course = courses.find((course) => course.name === trip);
+    if (!course) return null;
+    return {
+      php: Math.round(course.php * 0.1),
+      usd: Math.round(course.usd * 0.1),
+    };
+  };
+
   async function sendInvoiceEmail(booking: {
     id: string;
     full_name: string;
@@ -99,7 +119,7 @@ function AdminPage() {
           trip: booking.trip,
           certification_level: booking.certification_level,
           deposit_requested: booking.deposit_requested,
-          notes: booking.notes,
+          notes: booking.notes ?? undefined,
           paid: booking.paid,
           paid_at: booking.paid_at,
         },
@@ -111,6 +131,10 @@ function AdminPage() {
     } finally {
       setInvoicePendingId(null);
     }
+  }
+
+  function closePreview() {
+    setPreviewBookingId(null);
   }
 
   async function signOut() {
@@ -270,6 +294,13 @@ function AdminPage() {
                     >
                       {invoicePendingId === b.id ? "Sending invoice…" : "Send invoice"}
                     </button>
+                    <button
+                      type="button"
+                      className="rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted/70"
+                      onClick={() => setPreviewBookingId(b.id)}
+                    >
+                      Preview invoice
+                    </button>
                   </div>
                 </div>
 
@@ -332,6 +363,109 @@ function AdminPage() {
           })}
         </div>
       )}
+
+      <Dialog open={Boolean(previewBooking)} onOpenChange={(open) => !open && closePreview()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invoice preview</DialogTitle>
+            <DialogDescription>
+              Preview the invoice layout before sending it to the customer.
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewBooking ? (
+            <div className="space-y-6 print-invoice">
+              <div className="rounded-3xl border border-border bg-card p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pro Diving Asia</p>
+                    <p className="text-2xl font-semibold">Invoice preview</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="btn-ghost no-print"
+                    >
+                      Print / PDF
+                    </button>
+                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      {previewBooking.paid ? "Paid" : "Pending"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">Customer</p>
+                    <p className="font-semibold text-foreground">{previewBooking.full_name}</p>
+                    <p className="text-sm text-muted-foreground">{previewBooking.email}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">Booking</p>
+                    <p className="font-semibold text-foreground">{previewBooking.trip}</p>
+                    <p className="text-sm text-muted-foreground">{previewBooking.preferred_date}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-card p-6">
+                <div className="grid gap-4">
+                  <div className="grid gap-1 rounded-2xl bg-background p-4">
+                    <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">Invoice details</p>
+                    <div className="grid gap-2 border-t border-border pt-4 text-sm text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <span>Trip</span>
+                        <span className="text-foreground">{previewBooking.trip}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Date</span>
+                        <span className="text-foreground">{previewBooking.preferred_date}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Divers</span>
+                        <span className="text-foreground">{previewBooking.divers}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Certification</span>
+                        <span className="text-foreground">{previewBooking.certification_level}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Deposit requested</span>
+                        <span className="text-foreground">{previewBooking.deposit_requested ? "Yes" : "No"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {previewBooking.deposit_requested && (
+                    <div className="rounded-3xl border border-border bg-background p-5">
+                      <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">Deposit payment</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        10% deposit due now. Use the PayPal link below to complete payment.
+                      </p>
+                      <a
+                        className="mt-4 inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                        href={`https://paypal.me/prodivingasia/${getDepositAmount(previewBooking.trip)?.usd ?? ""}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Pay PayPal {getDepositAmount(previewBooking.trip)?.usd ? `USD ${getDepositAmount(previewBooking.trip)!.usd}` : "now"}
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="rounded-3xl border border-border bg-background p-5">
+                    <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">Notes</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{previewBooking.notes ?? "No additional notes."}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No invoice selected.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
