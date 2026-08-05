@@ -208,8 +208,8 @@ function BookPage() {
                     type="button"
                     onClick={() => {
                       const paypalUrl = depositAmount
-                        ? `https://paypal.me/prodivingasia/${depositAmount.usd}`
-                        : "https://paypal.me/prodivingasia";
+                        ? `https://www.paypal.com/paypalme/prodivingasia/${depositAmount.usd}USD`
+                        : "https://www.paypal.com/paypalme/prodivingasia";
                       window.open(paypalUrl, "_blank", "noopener,noreferrer");
                     }}
                     className="btn-primary mt-2 inline-flex items-center justify-center"

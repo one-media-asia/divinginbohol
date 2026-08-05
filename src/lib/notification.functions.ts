@@ -195,7 +195,7 @@ export const sendInvoiceToCustomer = createServerFn({ method: "POST" })
     <div style="margin-bottom:24px;padding:20px;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;">
       <h3 style="margin:0 0 12px;font-size:16px;color:#0f172a;">Payment instructions</h3>
       <p style="margin:0 0 12px;color:#334155;">${paymentInstructions}</p>
-      ${data.deposit_requested ? `<a href="https://paypal.me/prodivingasia/${depositAmount?.usd}" style="display:inline-block;padding:12px 20px;background:#0f172a;color:#ffffff;border-radius:999px;text-decoration:none;font-weight:700;">Pay via PayPal</a>` : ""}
+      ${data.deposit_requested ? `<a href="https://www.paypal.com/paypalme/prodivingasia/${depositAmount?.usd}USD" style="display:inline-block;padding:12px 20px;background:#0f172a;color:#ffffff;border-radius:999px;text-decoration:none;font-weight:700;">Pay via PayPal</a>` : ""}
     </div>
 
     <div style="margin-bottom:24px;padding:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;">
