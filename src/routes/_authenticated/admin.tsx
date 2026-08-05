@@ -7,6 +7,7 @@ import { Loader2, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { isAdmin, listBookings, updateBooking } from "@/lib/bookings.functions";
+import { sendInvoiceToCustomer } from "@/lib/notification.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -35,12 +36,13 @@ function AdminPage() {
   const fetchIsAdmin = useServerFn(isAdmin);
   const fetchBookings = useServerFn(listBookings);
   const saveBooking = useServerFn(updateBooking);
+  const sendInvoice = useServerFn(sendInvoiceToCustomer);
 
   const [status, setStatus] = useState<"all" | Status>("all");
-  const [paidFilter, setPaidFilter] = useState<"all" | "paid" | "unpaid">("all");
   const [term, setTerm] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [draftNotes, setDraftNotes] = useState("");
+  const [invoicePendingId, setInvoicePendingId] = useState<string | null>(null);
 
   const adminQuery = useQuery({ queryKey: ["is-admin"], queryFn: () => fetchIsAdmin({}) });
   const bookingsQuery = useQuery({
@@ -63,10 +65,6 @@ function AdminPage() {
     const q = term.trim().toLowerCase();
     return list.filter((b) => {
       if (status !== "all" && b.status !== status) return false;
-      if (paidFilter !== "all") {
-        if (paidFilter === "paid" && !b.paid) return false;
-        if (paidFilter === "unpaid" && b.paid) return false;
-      }
       if (!q) return true;
       return (
         b.full_name.toLowerCase().includes(q) ||
@@ -75,6 +73,45 @@ function AdminPage() {
       );
     });
   }, [bookingsQuery.data, status, term]);
+
+  async function sendInvoiceEmail(booking: {
+    id: string;
+    full_name: string;
+    email: string;
+    preferred_date: string;
+    divers: number;
+    trip: string;
+    certification_level: string;
+    deposit_requested: boolean;
+    notes: string | null;
+    paid: boolean;
+    paid_at: string | null;
+  }) {
+    setInvoicePendingId(booking.id);
+    try {
+      await sendInvoice({
+        data: {
+          id: booking.id,
+          full_name: booking.full_name,
+          email: booking.email,
+          preferred_date: booking.preferred_date,
+          divers: booking.divers,
+          trip: booking.trip,
+          certification_level: booking.certification_level,
+          deposit_requested: booking.deposit_requested,
+          notes: booking.notes,
+          paid: booking.paid,
+          paid_at: booking.paid_at,
+        },
+      });
+      toast.success("Invoice sent");
+    } catch (err) {
+      console.error("Invoice send failed", err);
+      toast.error("Could not send invoice");
+    } finally {
+      setInvoicePendingId(null);
+    }
+  }
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -147,21 +184,6 @@ function AdminPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground mr-2">Payment</span>
-          {(["all", "paid", "unpaid"] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPaidFilter(p)}
-              className={`rounded-full px-3 py-2 text-xs font-semibold capitalize transition ${
-                paidFilter === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
       </div>
 
       {bookingsQuery.isLoading ? (
@@ -205,23 +227,18 @@ function AdminPage() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       Deposit requested: {b.deposit_requested ? "Yes (10% deposit)" : "No"}
                     </p>
-                    <p className="mt-2 text-sm text-muted-foreground">Paid: {b.paid ? "Yes" : "No"}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Paid: {b.paid ? "Yes" : "No"}
+                      {b.paid && b.paid_at ? (
+                        <> ({new Date(b.paid_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })})</>
+                      ) : null}
+                    </p>
                     {b.notes ? (
                       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{b.notes}</p>
                     ) : null}
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={mutation.isPending}
-                      onClick={() =>
-                        mutation.mutate({ data: { id: b.id, paid: !b.paid } })
-                      }
-                      className="rounded-full px-3 py-1.5 text-xs font-semibold transition bg-muted hover:bg-muted/70"
-                    >
-                      {b.paid ? "Mark unpaid" : "Mark paid"}
-                    </button>
                     {statuses.map((s) => (
                       <button
                         key={s}
@@ -237,6 +254,22 @@ function AdminPage() {
                         {s}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      disabled={mutation.isPending}
+                      onClick={() => mutation.mutate({ data: { id: b.id, paid: !b.paid } })}
+                      className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition disabled:opacity-40"
+                    >
+                      {b.paid ? "Mark unpaid" : "Mark paid"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={invoicePendingId === b.id}
+                      onClick={() => sendInvoiceEmail(b)}
+                      className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition disabled:opacity-40"
+                    >
+                      {invoicePendingId === b.id ? "Sending invoice…" : "Send invoice"}
+                    </button>
                   </div>
                 </div>
 

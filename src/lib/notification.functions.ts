@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { courses } from "@/data/diving";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 const bookingNotificationSchema = z.object({
   full_name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(255),
@@ -11,6 +14,25 @@ const bookingNotificationSchema = z.object({
   deposit_requested: z.boolean(),
   notes: z.string().trim().max(1000).optional(),
 });
+
+const invoiceSchema = bookingNotificationSchema.extend({
+  id: z.string().uuid(),
+  paid: z.boolean().optional(),
+  paid_at: z.string().nullable().optional(),
+});
+
+const formatCurrency = (value: number, currency: "PHP" | "USD") =>
+  currency === "PHP" ? `PHP ${value.toLocaleString()}` : `USD $${value.toFixed(0)}`;
+
+const getDepositAmount = (trip: string) => {
+  const course = courses.find((course) => course.name === trip);
+  if (!course) return null;
+  return {
+    php: Math.round(course.php * 0.1),
+    usd: Math.round(course.usd * 0.1),
+    course,
+  };
+};
 
 type BookingNotificationRequest = z.infer<typeof bookingNotificationSchema>;
 
@@ -123,6 +145,56 @@ export const notifyAdminOfBookingRequest = createServerFn({ method: "POST" })
     } catch (confirmError) {
       console.error("Customer confirmation email failed", confirmError);
     }
+
+    return { ok: true };
+  });
+
+export const sendInvoiceToCustomer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => invoiceSchema.parse(input))
+  .handler(async ({ data }) => {
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const EMAIL_FROM =
+      process.env.RESEND_FROM || process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM ||
+      `no-reply@${new URL(process.env.SUPABASE_URL ?? "example.com").hostname}`;
+
+    if (!RESEND_API_KEY) {
+      throw new Error(
+        "Resend is not configured. Set RESEND_API_KEY in your environment."
+      );
+    }
+
+    const depositAmount = getDepositAmount(data.trip);
+    const paymentInstructions = data.deposit_requested
+      ? depositAmount
+        ? `Your 10% deposit is ${formatCurrency(depositAmount.php, "PHP")} / ${formatCurrency(
+            depositAmount.usd,
+            "USD",
+          )}. You can pay via PayPal at https://paypal.me/prodivingasia/${depositAmount.usd}`
+        : "We will send payment instructions once availability is confirmed."
+      : "No deposit is required to hold your request; we will invoice you once availability is confirmed.";
+
+    const text = `Hi ${data.full_name},\n\nHere is your invoice for the booking request you submitted with Pro Diving Asia.\n\nTrip: ${data.trip}\nPreferred date: ${data.preferred_date}\nDivers: ${data.divers}\nCertification level: ${data.certification_level}\nDeposit requested: ${data.deposit_requested ? "Yes (10% deposit)" : "No"}\n${paymentInstructions}\n\nNotes: ${data.notes ?? "(none)"}\n\nThank you,\nPro Diving Asia`;
+
+    const html = `<p>Hi ${data.full_name},</p>
+<p>Here is your invoice for the booking request you submitted with <strong>Pro Diving Asia</strong>.</p>
+<ul>
+  <li><strong>Trip:</strong> ${data.trip}</li>
+  <li><strong>Preferred date:</strong> ${data.preferred_date}</li>
+  <li><strong>Divers:</strong> ${data.divers}</li>
+  <li><strong>Certification level:</strong> ${data.certification_level}</li>
+  <li><strong>Deposit requested:</strong> ${data.deposit_requested ? "Yes (10% deposit)" : "No"}</li>
+  <li><strong>Payment instructions:</strong> ${paymentInstructions}</li>
+  <li><strong>Notes:</strong> ${data.notes ? data.notes : "(none)"}</li>
+</ul>
+<p>Thank you,<br/>Pro Diving Asia</p>`;
+
+    await sendEmail(
+      data.email,
+      `Invoice for your Pro Diving Asia booking: ${data.trip}`,
+      text,
+      html,
+    );
 
     return { ok: true };
   });

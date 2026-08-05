@@ -19,15 +19,14 @@ export type Database = {
           admin_notes: string | null
           certification_level: string
           created_at: string
-            deposit_requested: boolean
-            paid: boolean
-            paid_at: string | null
-            payment_reference: string | null
+          deposit_requested: boolean
           divers: number
           email: string
           full_name: string
           id: string
           notes: string | null
+          paid: boolean
+          paid_at: string | null
           preferred_date: string
           status: Database["public"]["Enums"]["booking_status"]
           trip: string
@@ -37,15 +36,14 @@ export type Database = {
           admin_notes?: string | null
           certification_level: string
           created_at?: string
-            deposit_requested?: boolean
-            paid?: boolean
-            paid_at?: string | null
-            payment_reference?: string | null
+          deposit_requested?: boolean
           divers?: number
           email: string
           full_name: string
           id?: string
           notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
           preferred_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           trip: string
@@ -56,14 +54,13 @@ export type Database = {
           certification_level?: string
           created_at?: string
           deposit_requested?: boolean
-            paid?: boolean
-            paid_at?: string | null
-            payment_reference?: string | null
           divers?: number
           email?: string
           full_name?: string
           id?: string
           notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
           preferred_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           trip?: string

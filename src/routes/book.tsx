@@ -87,6 +87,8 @@ function BookPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const action = form.get("action") as string | null;
+    const deposit_requested = action === "deposit";
     const parsed = bookingSchema.safeParse({
       full_name: form.get("name"),
       email: form.get("email"),
@@ -94,7 +96,7 @@ function BookPage() {
       divers: form.get("divers"),
       trip: form.get("trip"),
       certification_level: form.get("level"),
-      deposit_requested: form.get("deposit_requested") === "on",
+      deposit_requested,
       notes: form.get("notes") || undefined,
     });
 
@@ -294,35 +296,41 @@ function BookPage() {
                   placeholder="Staying at Alona Beach, need a shortie wetsuit in size M."
                 />
               </label>
-              <label className="flex items-center gap-3 text-sm font-medium sm:col-span-2">
-                <input
-                  type="checkbox"
-                  name="deposit_requested"
-                  className="h-5 w-5 rounded border-input bg-card text-primary focus:ring-primary"
-                />
-                <span>
-                  Yes, I'd like to pay a <strong>10% deposit</strong> now to secure my spot.
-                </span>
-              </label>
-              {depositAmount ? (
-                <div className="sm:col-span-2 rounded-2xl border border-border bg-surface p-4 text-sm text-muted-foreground">
-                  Estimated deposit for <strong>{selectedTrip}</strong>: {formatCurrency(depositAmount.php, "PHP")} / {formatCurrency(depositAmount.usd, "USD")}
-                </div>
-              ) : (
+              <div className="sm:col-span-2 rounded-2xl border border-border bg-surface p-4 text-sm text-muted-foreground">
+                {depositAmount ? (
+                  <>
+                    Choose <strong>Send message only</strong> or <strong>Pay 10% deposit</strong> now.
+                    Estimated deposit for <strong>{selectedTrip}</strong>: {formatCurrency(depositAmount.php, "PHP")} / {formatCurrency(depositAmount.usd, "USD")}
+                  </>
+                ) : (
+                  "Choose Send message only, or Pay deposit once the booking details are confirmed."
+                )}
+              </div>
+              <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row">
+                <button type="submit" name="action" value="message" disabled={submitting} className="btn-outline w-full">
+                  {submitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" /> Sending…
+                    </span>
+                  ) : (
+                    "Send message only"
+                  )}
+                </button>
+                <button type="submit" name="action" value="deposit" disabled={submitting} className="btn-primary w-full">
+                  {submitting ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" /> Sending…
+                    </span>
+                  ) : (
+                    "Pay 10% deposit"
+                  )}
+                </button>
+              </div>
+              {depositAmount ? null : (
                 <div className="sm:col-span-2 rounded-2xl border border-border bg-surface p-4 text-sm text-muted-foreground">
                   For trips that are not PADI courses, we will follow up with a deposit amount after reviewing your booking.
                 </div>
               )}
-              <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
-                {submitting ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Loader2 className="size-4 animate-spin" /> Sending…
-                  </span>
-                ) : (
-                  "Send booking request"
-                )}
-              </button>
-
             </form>
           )}
         </div>

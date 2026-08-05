@@ -61,10 +61,18 @@ export const updateBooking = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: { status?: "new" | "confirmed" | "declined" | "archived"; admin_notes?: string | null; paid?: boolean } = {};
+    const patch: {
+      status?: "new" | "confirmed" | "declined" | "archived";
+      admin_notes?: string | null;
+      paid?: boolean;
+      paid_at?: string | null;
+    } = {};
     if (data.status !== undefined) patch.status = data.status;
     if (data.admin_notes !== undefined) patch.admin_notes = data.admin_notes;
-    if (data.paid !== undefined) patch.paid = data.paid;
+    if (data.paid !== undefined) {
+      patch.paid = data.paid;
+      patch.paid_at = data.paid ? new Date().toISOString() : null;
+    }
 
     const { data: row, error } = await context.supabase
       .from("booking_requests")
