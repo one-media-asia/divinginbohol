@@ -81,6 +81,7 @@ function BookPage() {
   const [submitting, setSubmitting] = useState(false);
   const [pendingBooking, setPendingBooking] = useState<BookingDraft | null>(null);
   const [step, setStep] = useState<"form" | "deposit">("form");
+  const [submitMode, setSubmitMode] = useState<"message" | "deposit">("message");
   const [selectedTrip, setSelectedTrip] = useState(preselected);
   const depositAmount = getDepositAmount(pendingBooking?.trip ?? selectedTrip);
 
@@ -88,7 +89,7 @@ function BookPage() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const action = form.get("action") as string | null;
-    const deposit_requested = action === "deposit";
+    const deposit_requested = action === "deposit" || submitMode === "deposit";
     const parsed = bookingSchema.safeParse({
       full_name: form.get("name"),
       email: form.get("email"),
@@ -203,25 +204,18 @@ function BookPage() {
                   We currently offer deposit payment by bank transfer or direct checkout link. After payment, we will confirm your booking.
                 </p>
                   <div className="mt-4">
-                  {depositAmount ? (
-                    <a
-                      href={`https://paypal.me/prodivingasia/${depositAmount.usd}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary mt-2 inline-flex items-center justify-center"
-                    >
-                      Pay via PayPal (USD {depositAmount.usd})
-                    </a>
-                  ) : (
-                    <a
-                      href="https://paypal.me/prodivingasia"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary mt-2 inline-flex items-center justify-center"
-                    >
-                      Pay via PayPal
-                    </a>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const paypalUrl = depositAmount
+                        ? `https://paypal.me/prodivingasia/${depositAmount.usd}`
+                        : "https://paypal.me/prodivingasia";
+                      window.open(paypalUrl, "_blank", "noopener,noreferrer");
+                    }}
+                    className="btn-primary mt-2 inline-flex items-center justify-center"
+                  >
+                    {depositAmount ? `Pay deposit now (USD ${depositAmount.usd})` : "Pay deposit now"}
+                  </button>
 
                   <div className="mt-3 text-xs text-muted-foreground">
                     <p>Or bank transfer: Account name Pro Diving Asia — please include your booking name.</p>
@@ -307,7 +301,14 @@ function BookPage() {
                 )}
               </div>
               <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row">
-                <button type="submit" name="action" value="message" disabled={submitting} className="btn-outline w-full">
+                <button
+                  type="submit"
+                  name="action"
+                  value="message"
+                  disabled={submitting}
+                  onClick={() => setSubmitMode("message")}
+                  className="btn-outline w-full"
+                >
                   {submitting ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-4 animate-spin" /> Sending…
@@ -316,7 +317,14 @@ function BookPage() {
                     "Send message only"
                   )}
                 </button>
-                <button type="submit" name="action" value="deposit" disabled={submitting} className="btn-primary w-full">
+                <button
+                  type="submit"
+                  name="action"
+                  value="deposit"
+                  disabled={submitting}
+                  onClick={() => setSubmitMode("deposit")}
+                  className="btn-primary w-full"
+                >
                   {submitting ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="size-4 animate-spin" /> Sending…
